@@ -26,7 +26,6 @@ dist-ssr
 pnpm-lock.yaml
 pnpm-workspace.yaml
 
-/src/routeTree.gen.ts
 .tanstack
 bun.lock
 
