@@ -10,15 +10,11 @@ import {
 } from "date-fns";
 import { es } from "date-fns/locale";
 import { type FC, memo, useCallback, useMemo, useState } from "react";
+import { TasksAccordion } from "@/components/accordions/TasksAccordion.tsx";
 import { TaskItem } from "@/components/TaskItem.tsx";
-import {
-	Accordion,
-	AccordionContent,
-	AccordionItem,
-	AccordionTrigger,
-} from "@/components/ui/accordion";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { type Task, useGetTasks } from "@/hooks/useTask";
+import { TasksStatus } from "@/components/tabs/TasksStatus.tsx";
+import { useGetTasks } from "@/hooks/useTask";
+import type { Task } from "@/types/task.ts";
 
 export const today = startOfToday();
 
@@ -145,43 +141,20 @@ export const TaskList: FC<TaskListProps> = memo(({ scope, projectId }) => {
 
 	return (
 		<div className="mx-auto w-full max-w-xl">
-			<Tabs
-				value={statusTab}
-				onValueChange={handleStatusChange}
-				className="mb-4"
-			>
-				<TabsList>
-					<TabsTrigger value="all">Todas</TabsTrigger>
-					<TabsTrigger value="pending">Pendientes</TabsTrigger>
-					<TabsTrigger value="in-progress">En progreso</TabsTrigger>
-					<TabsTrigger value="cancelled">Canceladas</TabsTrigger>
-					<TabsTrigger value="completed">Completadas</TabsTrigger>
-				</TabsList>
-			</Tabs>
+			<TasksStatus value={statusTab} onValueChange={handleStatusChange} />
 
 			{sortedGroupKeys.map((groupKey) => {
 				const groupTasks = grouped[groupKey];
 				const isCompletedGroup = groupKey === "Completadas";
 
 				return (
-					<Accordion
-						type="single"
-						collapsible
-						defaultValue={isCompletedGroup ? undefined : groupKey}
+					<TasksAccordion
 						key={groupKey}
-						className="mb-2"
-					>
-						<AccordionItem value={groupKey}>
-							<AccordionTrigger className="text-left">
-								{groupKey} {isCompletedGroup && `(${groupTasks.length})`}
-							</AccordionTrigger>
-							<AccordionContent>
-								{groupTasks.map((task) => (
-									<TaskItem key={task.id} task={task} />
-								))}
-							</AccordionContent>
-						</AccordionItem>
-					</Accordion>
+						completedGroup={isCompletedGroup}
+						groupKey={groupKey}
+						tasks={groupTasks}
+						callbackfn={(task) => <TaskItem key={task.id} task={task} />}
+					/>
 				);
 			})}
 		</div>

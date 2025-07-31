@@ -29,8 +29,8 @@ import {
 	PopoverTrigger,
 } from "@/components/ui/popover.tsx";
 import { Textarea } from "@/components/ui/textarea.tsx";
-import type { Task } from "@/hooks/useTask.ts";
 import { useDeleteTask, useUpdateTask } from "@/hooks/useTask.ts";
+import type { Task } from "@/types/task.ts";
 
 export const TaskItem: FC<{ task: Task }> = memo(({ task }) => {
 	const { mutate: update, isPending } = useUpdateTask(task.id);
