@@ -40,11 +40,11 @@ export const AddTaskDialog: FC = () => {
 	};
 
 	const handleCreateTask = () => {
-		if (!title.trim()) return;
+		if (!title?.trim()) return;
 
 		createTask(
 			{
-				description: title.trim(),
+				description: title?.trim(),
 				longDescription: longDescription ?? undefined,
 				deadline: deadline ?? undefined,
 				projectId: project ?? undefined,

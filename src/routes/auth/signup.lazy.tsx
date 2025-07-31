@@ -32,9 +32,9 @@ function RouteComponent() {
 			confirmPassword?: string;
 		} = {};
 
-		if (!name.trim()) {
+		if (!name?.trim()) {
 			newErrors.name = "El nombre es requerido";
-		} else if (name.trim().length < 2) {
+		} else if (name.trim()?.length < 2) {
 			newErrors.name = "El nombre debe tener al menos 2 caracteres";
 		}
 
@@ -68,7 +68,7 @@ function RouteComponent() {
 		}
 
 		register.mutate({
-			name: name.trim(),
+			name: name?.trim(),
 			email,
 			password,
 		});

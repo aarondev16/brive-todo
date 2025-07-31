@@ -13,7 +13,7 @@ export const SearchDialog: FC = () => {
 
 	useEffect(() => {
 		const handler = setTimeout(() => {
-			setDebouncedQuery(query.trim());
+			setDebouncedQuery(query?.trim());
 		}, 100);
 		return () => clearTimeout(handler);
 	}, [query]);
