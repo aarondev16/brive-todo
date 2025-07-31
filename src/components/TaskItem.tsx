@@ -39,6 +39,76 @@ import { Textarea } from "@/components/ui/textarea.tsx";
 import { useDeleteTask, useUpdateTask } from "@/hooks/useTask.ts";
 import type { Task } from "@/types/task.ts";
 
+function TaskDateActions(props: {
+	open: boolean;
+	onOpenChange: (value: ((prevState: boolean) => boolean) | boolean) => void;
+	onClick: () => void;
+	onClick1: () => void;
+	onClick2: () => void;
+	value: string | null;
+	onChange: (date: string | null) => void;
+}) {
+	return (
+		<Popover open={props.open} onOpenChange={props.onOpenChange}>
+			<PopoverTrigger asChild>
+				<Button variant="ghost" size="icon">
+					<CalendarIcon className="size-4" />
+				</Button>
+			</PopoverTrigger>
+			<PopoverContent side="bottom" className="flex w-36 flex-col gap-1 p-2">
+				<Button variant="ghost" size="sm" onClick={props.onClick}>
+					Hoy
+				</Button>
+				<Button variant="ghost" size="sm" onClick={props.onClick1}>
+					Mañana
+				</Button>
+				<Button variant="ghost" size="sm" onClick={props.onClick2}>
+					+1 semana
+				</Button>
+				<TaskDatePicker value={props.value} onChange={props.onChange} />
+			</PopoverContent>
+		</Popover>
+	);
+}
+
+function DeleteTask(props: {
+	open: boolean;
+	onOpenChange: (value: ((prevState: boolean) => boolean) | boolean) => void;
+	onClick: () => void;
+	description: unknown;
+	onClick1: () => void;
+}) {
+	return (
+		<AlertDialog open={props.open} onOpenChange={props.onOpenChange}>
+			<AlertDialogTrigger asChild>
+				<Button variant="ghost" size="icon" onClick={props.onClick}>
+					<TrashIcon className="size-4" />
+				</Button>
+			</AlertDialogTrigger>
+			<AlertDialogContent>
+				<AlertDialogHeader>
+					<AlertDialogTitle>
+						¿Eliminar tarea “{props.description}”?
+					</AlertDialogTitle>
+					<AlertDialogDescription>
+						Esta acción no se puede deshacer. La tarea se eliminará
+						permanentemente.
+					</AlertDialogDescription>
+				</AlertDialogHeader>
+				<AlertDialogFooter>
+					<AlertDialogCancel>Cancelar</AlertDialogCancel>
+					<AlertDialogAction
+						onClick={props.onClick1}
+						className="bg-red-600 text-white"
+					>
+						Eliminar
+					</AlertDialogAction>
+				</AlertDialogFooter>
+			</AlertDialogContent>
+		</AlertDialog>
+	);
+}
+
 export const TaskItem: FC<{ task: Task }> = memo(({ task }) => {
 	const { mutate: update, isPending } = useUpdateTask(task.id);
 	const { mutate: deleteTask } = useDeleteTask(task.id);
@@ -51,7 +121,6 @@ export const TaskItem: FC<{ task: Task }> = memo(({ task }) => {
 	const [status, setStatus] = useState<Task["status"]>(task.status);
 	const [open, setOpen] = useState(false);
 	const [isDateOpen, setIsDateOpen] = useState(false);
-
 	const [confirmOpen, setConfirmOpen] = useState(false);
 
 	const patch = useCallback((body: Partial<Task>) => update(body), [update]);
@@ -112,9 +181,6 @@ export const TaskItem: FC<{ task: Task }> = memo(({ task }) => {
 		}
 	}, [status]);
 
-	const { mutate: updateStatus, isPending: updateStatusPending } =
-		useUpdateTask(task.id);
-
 	return (
 		<Dialog open={open} onOpenChange={setOpen}>
 			<div className="group flex w-full items-start justify-between gap-3 border-border border-b py-3">
@@ -149,84 +215,43 @@ export const TaskItem: FC<{ task: Task }> = memo(({ task }) => {
 
 				<div className="flex items-center gap-1">
 					<Select
-						value={task.status}
+						value={status}
 						onValueChange={(value) =>
-							updateStatus({ status: value as Task["status"] })
+							patch({ status: value as Task["status"] })
 						}
-						disabled={updateStatusPending}
+						disabled={false}
 					>
 						<SelectTrigger className="max-w-32">
 							<SelectValue placeholder="Estado" />
 						</SelectTrigger>
-						<SelectContent className="">
+						<SelectContent>
 							<SelectItem value="pending">Pendiente</SelectItem>
 							<SelectItem value="in-progress">En progreso</SelectItem>
 							<SelectItem value="cancelled">Cancelada</SelectItem>
 						</SelectContent>
 					</Select>
-					{/*{status !== "completed" && (*/}
-					{/*	<Button variant="ghost" size="icon" onClick={toggleProgress}>*/}
-					{/*		{status === "in-progress" ? (*/}
-					{/*			<PauseIcon className="size-4" />*/}
-					{/*		) : (*/}
-					{/*			<PlayIcon className="size-4" />*/}
-					{/*		)}*/}
-					{/*	</Button>*/}
-					{/*)}*/}
 
-					<Popover open={isDateOpen} onOpenChange={setIsDateOpen}>
-						<PopoverTrigger asChild>
-							<Button variant="ghost" size="icon">
-								<CalendarIcon className="size-4" />
-							</Button>
-						</PopoverTrigger>
-						<PopoverContent
-							side="bottom"
-							className="flex w-36 flex-col gap-1 p-2"
-						>
-							<Button variant="ghost" size="sm" onClick={() => moveDeadline(0)}>
-								Hoy
-							</Button>
-							<Button variant="ghost" size="sm" onClick={() => moveDeadline(1)}>
-								Mañana
-							</Button>
-							<Button variant="ghost" size="sm" onClick={() => moveDeadline(7)}>
-								+1 semana
-							</Button>
-							<TaskDatePicker
-								value={deadline}
-								onChange={handleDeadlineChange}
-							/>
-						</PopoverContent>
-					</Popover>
+					{status === "cancelled" && (
+						<DeleteTask
+							open={confirmOpen}
+							onOpenChange={setConfirmOpen}
+							onClick={openConfirm}
+							description={description}
+							onClick1={confirmDelete}
+						/>
+					)}
 
-					<AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
-						<AlertDialogTrigger asChild>
-							<Button variant="ghost" size="icon" onClick={openConfirm}>
-								<TrashIcon className="size-4" />
-							</Button>
-						</AlertDialogTrigger>
-						<AlertDialogContent>
-							<AlertDialogHeader>
-								<AlertDialogTitle>
-									¿Eliminar tarea “{description}”?
-								</AlertDialogTitle>
-								<AlertDialogDescription>
-									Esta acción no se puede deshacer. La tarea se eliminará
-									permanentemente.
-								</AlertDialogDescription>
-							</AlertDialogHeader>
-							<AlertDialogFooter>
-								<AlertDialogCancel>Cancelar</AlertDialogCancel>
-								<AlertDialogAction
-									onClick={confirmDelete}
-									className="bg-red-600 text-white"
-								>
-									Eliminar
-								</AlertDialogAction>
-							</AlertDialogFooter>
-						</AlertDialogContent>
-					</AlertDialog>
+					{status !== "cancelled" && (
+						<TaskDateActions
+							open={isDateOpen}
+							onOpenChange={setIsDateOpen}
+							onClick={() => moveDeadline(0)}
+							onClick1={() => moveDeadline(1)}
+							onClick2={() => moveDeadline(7)}
+							value={deadline}
+							onChange={handleDeadlineChange}
+						/>
+					)}
 				</div>
 			</div>
 
