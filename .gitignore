@@ -30,3 +30,6 @@ pnpm-workspace.yaml
 bun.lock
 
 .env
+
+
+.aiignore
