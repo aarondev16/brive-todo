@@ -1,5 +1,5 @@
 import { addDays, format } from "date-fns";
-import { CalendarIcon, PauseIcon, PlayIcon, TrashIcon } from "lucide-react";
+import { CalendarIcon, TrashIcon } from "lucide-react";
 import { type FC, memo, useCallback, useMemo, useState } from "react";
 import { TaskDatePicker } from "@/components/calendar-19.tsx";
 import { formatDeadline, today } from "@/components/TaskList.tsx";
@@ -28,6 +28,13 @@ import {
 	PopoverContent,
 	PopoverTrigger,
 } from "@/components/ui/popover.tsx";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea.tsx";
 import { useDeleteTask, useUpdateTask } from "@/hooks/useTask.ts";
 import type { Task } from "@/types/task.ts";
@@ -67,13 +74,6 @@ export const TaskItem: FC<{ task: Task }> = memo(({ task }) => {
 		[patch],
 	);
 
-	const toggleProgress = useCallback(() => {
-		const newStatus: Task["status"] =
-			status === "in-progress" ? "pending" : "in-progress";
-		setStatus(newStatus);
-		patch({ status: newStatus });
-	}, [status, patch]);
-
 	const saveChanges = useCallback(() => {
 		patch({
 			description: description.trim(),
@@ -112,9 +112,12 @@ export const TaskItem: FC<{ task: Task }> = memo(({ task }) => {
 		}
 	}, [status]);
 
+	const { mutate: updateStatus, isPending: updateStatusPending } =
+		useUpdateTask(task.id);
+
 	return (
 		<Dialog open={open} onOpenChange={setOpen}>
-			<div className="group flex items-start gap-3 border-border border-b py-3">
+			<div className="group flex w-full items-start justify-between gap-3 border-border border-b py-3">
 				<Checkbox
 					checked={status === "completed"}
 					onCheckedChange={handleToggleCompleted}
@@ -145,15 +148,31 @@ export const TaskItem: FC<{ task: Task }> = memo(({ task }) => {
 				</button>
 
 				<div className="flex items-center gap-1">
-					{status !== "completed" && (
-						<Button variant="ghost" size="icon" onClick={toggleProgress}>
-							{status === "in-progress" ? (
-								<PauseIcon className="size-4" />
-							) : (
-								<PlayIcon className="size-4" />
-							)}
-						</Button>
-					)}
+					<Select
+						value={task.status}
+						onValueChange={(value) =>
+							updateStatus({ status: value as Task["status"] })
+						}
+						disabled={updateStatusPending}
+					>
+						<SelectTrigger className="max-w-32">
+							<SelectValue placeholder="Estado" />
+						</SelectTrigger>
+						<SelectContent className="">
+							<SelectItem value="pending">Pendiente</SelectItem>
+							<SelectItem value="in-progress">En progreso</SelectItem>
+							<SelectItem value="cancelled">Cancelada</SelectItem>
+						</SelectContent>
+					</Select>
+					{/*{status !== "completed" && (*/}
+					{/*	<Button variant="ghost" size="icon" onClick={toggleProgress}>*/}
+					{/*		{status === "in-progress" ? (*/}
+					{/*			<PauseIcon className="size-4" />*/}
+					{/*		) : (*/}
+					{/*			<PlayIcon className="size-4" />*/}
+					{/*		)}*/}
+					{/*	</Button>*/}
+					{/*)}*/}
 
 					<Popover open={isDateOpen} onOpenChange={setIsDateOpen}>
 						<PopoverTrigger asChild>

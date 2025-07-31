@@ -47,22 +47,18 @@ export const formatDeadline = (d?: string | null) => {
 
 const taskFilters = {
 	inbox: () => true,
-
 	today: (task: Task) => {
 		const d = parseDeadline(task.deadline);
 		return !!d && isSameDay(d, today);
 	},
-
 	overdue: (task: Task) => {
 		const d = parseDeadline(task.deadline);
 		return !!d && isBefore(d, today);
 	},
-
 	upcoming: (task: Task) => {
 		const d = parseDeadline(task.deadline);
 		return !!d && isAfter(d, today);
 	},
-
 	noDeadline: (task: Task) => !task.deadline,
 } as const;
 
@@ -84,15 +80,12 @@ export const TaskList: FC<TaskListProps> = memo(({ scope, projectId }) => {
 	const { data: inboxTasks = [] } = useGetInboxTasks({
 		enabled: scope === "inbox",
 	});
-
 	const { data: todayTasks = [] } = useGetTodayTasks({
 		enabled: scope === "today",
 	});
-
 	const { data: upcomingTasks = [] } = useGetUpcomingTasks({
 		enabled: scope === "upcoming",
 	});
-
 	const { data: projectTasks = [] } = useGetTasks({
 		projectId: projectId ?? "null",
 		enabled: scope === "project",
@@ -173,6 +166,14 @@ export const TaskList: FC<TaskListProps> = memo(({ scope, projectId }) => {
 		[grouped],
 	);
 
+	const TaskRow: FC<{ task: Task }> = ({ task }) => {
+		return (
+			<div className="flex items-center justify-between">
+				<TaskItem task={task} />
+			</div>
+		);
+	};
+
 	const handleStatusChange = useCallback((value: string) => {
 		setStatusTab(value as "all" | Task["status"]);
 	}, []);
@@ -191,7 +192,7 @@ export const TaskList: FC<TaskListProps> = memo(({ scope, projectId }) => {
 						completedGroup={isCompletedGroup}
 						groupKey={groupKey}
 						tasks={groupTasks}
-						callbackfn={(task) => <TaskItem key={task.id} task={task} />}
+						callbackfn={(task) => <TaskRow key={task.id} task={task} />}
 					/>
 				);
 			})}
