@@ -8,16 +8,10 @@ import type {
 	TaskUpdatePayload,
 } from "@/types/task.ts";
 
-export const useGetTasks = (opts: GetTasksOptions = {}) => {
-	const {
-		projectId,
-		parentId,
-		enabled = true,
-		date,
-		search,
-		startDate,
-		endDate,
-	} = opts;
+const TODAY_STR = new Date().toISOString().split("T")[0];
+
+const buildParams = (opts: GetTasksOptions = {}) => {
+	const { projectId, parentId, date, search, startDate, endDate } = opts;
 
 	const params = new URLSearchParams();
 
@@ -40,6 +34,13 @@ export const useGetTasks = (opts: GetTasksOptions = {}) => {
 		params.set("endDate", endDate);
 	}
 
+	return params;
+};
+
+export const useGetTasks = (opts: GetTasksOptions = {}) => {
+	const { enabled = true, ...rest } = opts;
+	const params = buildParams(rest);
+
 	const endpoint = `/tasks${params.toString() ? `?${params.toString()}` : ""}`;
 
 	const query = useApiQuery<TasksResponse, TasksResponse>(endpoint, {
@@ -53,60 +54,72 @@ export const useGetTasks = (opts: GetTasksOptions = {}) => {
 	};
 };
 
-/**
- * Hook para obtener una tarea única por ID.
- */
+export const useGetInboxTasks = (
+	extraOpts: Omit<GetTasksOptions, "projectId" | "date" | "startDate"> = {},
+) => useGetTasks({ ...extraOpts, projectId: null });
+
+export const useGetTodayTasks = (
+	extraOpts: Omit<GetTasksOptions, "date" | "projectId" | "startDate"> = {},
+) => useGetTasks({ ...extraOpts, date: TODAY_STR });
+
+export const useGetUpcomingTasks = (
+	extraOpts: Omit<GetTasksOptions, "startDate" | "projectId" | "date"> = {},
+) => useGetTasks({ ...extraOpts, startDate: TODAY_STR });
+
 export const useGetTask = (id: string, enabled = true) =>
 	useApiQuery<TaskResponse, TaskResponse>(`/tasks/${id}`, {
 		enabled: !!id && enabled,
 	});
 
-/**
- * Hook para crear una nueva tarea.
- */
 export const useCreateTask = () =>
 	useApiMutation<Task, TaskPayload>("/tasks", "POST", {
-		invalidateQueries: ["/tasks"],
+		invalidateQueries: [
+			"/tasks",
+			"/tasks?projectId=null",
+			`/tasks?date=${TODAY_STR}`,
+			`/tasks?startDate=${TODAY_STR}`,
+		],
 		successMessage: "Tarea creada exitosamente",
 		errorMessage: "Error al crear la tarea",
 	});
 
-/**
- * Hook para buscar tareas (sin ejecutar por defecto).
- */
 export const useSearchTasks = () =>
 	useApiQuery<TasksResponse, TasksResponse>("/tasks", {
 		enabled: false,
 	});
 
-/**
- * Hook para crear tarea desde modal.
- */
 export const useCreateTaskModal = () =>
 	useApiMutation<Task, TaskPayload>("/tasks", "POST", {
-		invalidateQueries: ["/tasks", "/tasks?projectId=null"],
+		invalidateQueries: [
+			"/tasks",
+			"/tasks?projectId=null",
+			`/tasks?date=${TODAY_STR}`,
+			`/tasks?startDate=${TODAY_STR}`,
+		],
 		successMessage: "Tarea creada exitosamente",
 		errorMessage: "Error al crear la tarea",
 	});
 
-/**
- * Hook para actualizar una tarea específica.
- * Retorna mutate(payload) y estado.
- */
 export const useUpdateTask = (id: string) =>
 	useApiMutation<Task, TaskUpdatePayload>(`/tasks/${id}`, "PATCH", {
-		invalidateQueries: ["/tasks"],
+		invalidateQueries: [
+			"/tasks",
+			"/tasks?projectId=null",
+			`/tasks?date=${TODAY_STR}`,
+			`/tasks?startDate=${TODAY_STR}`,
+		],
 		successMessage: "Tarea actualizada exitosamente",
 		errorMessage: "Error al actualizar la tarea",
 	});
 
-/**
- * Hook para eliminar una tarea específica.
- * Retorna mutate() y estado.
- */
 export const useDeleteTask = (id: string) =>
 	useApiMutation<void, void>(`/tasks/${id}`, "DELETE", {
-		invalidateQueries: ["/tasks"],
+		invalidateQueries: [
+			"/tasks",
+			"/tasks?projectId=null",
+			`/tasks?date=${TODAY_STR}`,
+			`/tasks?startDate=${TODAY_STR}`,
+		],
 		successMessage: "Tarea eliminada exitosamente",
 		errorMessage: "Error al eliminar la tarea",
 	});

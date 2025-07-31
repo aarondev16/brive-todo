@@ -10,10 +10,18 @@ import {
 } from "date-fns";
 import { es } from "date-fns/locale";
 import { type FC, memo, useCallback, useMemo, useState } from "react";
+
 import { TasksAccordion } from "@/components/accordions/TasksAccordion.tsx";
 import { TaskItem } from "@/components/TaskItem.tsx";
 import { TasksStatus } from "@/components/tabs/TasksStatus.tsx";
-import { useGetTasks } from "@/hooks/useTask";
+
+import {
+	useGetInboxTasks,
+	useGetTasks,
+	useGetTodayTasks,
+	useGetUpcomingTasks,
+} from "@/hooks/useTask";
+
 import type { Task } from "@/types/task.ts";
 
 export const today = startOfToday();
@@ -73,7 +81,37 @@ const GROUP_ORDER = [
 ] as const;
 
 export const TaskList: FC<TaskListProps> = memo(({ scope, projectId }) => {
-	const { data: tasks = [] } = useGetTasks({ projectId: projectId ?? "null" });
+	const { data: inboxTasks = [] } = useGetInboxTasks({
+		enabled: scope === "inbox",
+	});
+
+	const { data: todayTasks = [] } = useGetTodayTasks({
+		enabled: scope === "today",
+	});
+
+	const { data: upcomingTasks = [] } = useGetUpcomingTasks({
+		enabled: scope === "upcoming",
+	});
+
+	const { data: projectTasks = [] } = useGetTasks({
+		projectId: projectId ?? "null",
+		enabled: scope === "project",
+	});
+
+	const tasks = useMemo(() => {
+		switch (scope) {
+			case "inbox":
+				return inboxTasks;
+			case "today":
+				return todayTasks;
+			case "upcoming":
+				return upcomingTasks;
+			case "project":
+			default:
+				return projectTasks;
+		}
+	}, [scope, inboxTasks, todayTasks, upcomingTasks, projectTasks]);
+
 	const [statusTab, setStatusTab] = useState<"all" | Task["status"]>("all");
 
 	const baseFiltered = useMemo(() => {
