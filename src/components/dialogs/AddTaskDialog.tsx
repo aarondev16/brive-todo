@@ -116,7 +116,7 @@ export const AddTaskDialog: FC = () => {
 
 				<DialogFooter>
 					<Button
-						disabled={!title.trim() || isPending}
+						disabled={!title?.trim() || isPending}
 						onClick={handleCreateTask}
 					>
 						Añadir

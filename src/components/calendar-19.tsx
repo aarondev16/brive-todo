@@ -1,10 +1,8 @@
-import { parseDate } from "chrono-node";
-import { addDays } from "date-fns";
+import { addDays, isValid, parseISO, startOfDay } from "date-fns";
 import { Calendar as CalendarIcon } from "lucide-react";
-import { type FC, useMemo, useState } from "react";
+import { type FC, useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
-
 import { Input } from "@/components/ui/input";
 import {
 	Popover,
@@ -18,48 +16,85 @@ interface DatePickerProps {
 }
 
 export const TaskDatePicker: FC<DatePickerProps> = ({ value, onChange }) => {
-	const today = useMemo(() => new Date(), []);
-	const initialDate = useMemo(
-		() => (value ? new Date(value) : today),
-		[value, today],
-	);
+	const today = useMemo(() => startOfDay(new Date()), []);
+
+	const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
+	const [input, setInput] = useState("");
 	const [open, setOpen] = useState(false);
-	const [input, setInput] = useState(() =>
-		value ? formatLabel(initialDate) : "",
-	);
+
+	useEffect(() => {
+		if (value) {
+			const parsed = parseISO(value);
+			if (isValid(parsed)) {
+				const sd = startOfDay(parsed);
+				setSelectedDate(sd);
+				setInput(formatLabel(sd));
+				return;
+			}
+		}
+		setSelectedDate(undefined);
+		setInput("");
+	}, [value]);
 
 	const presets = useMemo(
 		() => [
-			{ label: "Hoy", offset: 1 },
-			{ label: "Mañana", offset: 2 },
-			{ label: "En 3 días", offset: 4 },
-			{ label: "En 1 semana", offset: 8 },
-			{ label: "En 2 semanas", offset: 15 },
+			{ label: "Hoy", offset: 0 },
+			{ label: "Mañana", offset: 1 },
+			{ label: "En 3 días", offset: 3 },
+			{ label: "En 1 semana", offset: 7 },
+			{ label: "En 2 semanas", offset: 14 },
 		],
 		[],
 	);
 
-	const iso = (d: Date) => d.toISOString().split("T")[0];
+	const isoFormat = (d: Date) => {
+		const y = d.getUTCFullYear();
+		const m = String(d.getUTCMonth() + 1).padStart(2, "0");
+		const day = String(d.getUTCDate()).padStart(2, "0");
+		return `${y}-${m}-${day}T18:00:00.000Z`;
+	};
 
 	const handleSelectDate = (d?: Date) => {
 		if (!d) return;
-		onChange(iso(d));
-		setInput(formatLabel(d));
+		const sd = startOfDay(d);
+		setSelectedDate(sd);
+		onChange(isoFormat(sd));
+		setInput(formatLabel(sd));
 		setOpen(false);
 	};
 
 	const handlePreset = (offset: number, label: string) => {
-		const d = addDays(today, offset);
-		onChange(iso(d));
+		const d = startOfDay(addDays(today, offset));
+		setSelectedDate(d);
+		onChange(isoFormat(d));
 		setInput(label);
 		setOpen(false);
 	};
 
 	const handleInput = (text: string) => {
 		setInput(text);
-		// @ts-ignore
-		const parsed = parseDate(text, { forwardDate: true }) ?? undefined;
-		onChange(parsed ? iso(parsed) : null);
+		// Try ISO yyyy-MM-dd
+		if (/^\d{4}-\d{2}-\d{2}$/.test(text)) {
+			const d = parseISO(text);
+			if (isValid(d)) {
+				const sd = startOfDay(d);
+				setSelectedDate(sd);
+				onChange(isoFormat(sd));
+				return;
+			}
+		}
+		// Try dd/MM/yyyy
+		if (/^\d{2}\/\d{2}\/\d{4}$/.test(text)) {
+			const [dd, mm, yyyy] = text.split("/");
+			const d = new Date(Number(yyyy), Number(mm) - 1, Number(dd));
+			if (isValid(d)) {
+				const sd = startOfDay(d);
+				setSelectedDate(sd);
+				onChange(isoFormat(sd));
+				return;
+			}
+		}
+		onChange(null);
 	};
 
 	return (
@@ -74,8 +109,9 @@ export const TaskDatePicker: FC<DatePickerProps> = ({ value, onChange }) => {
 					}
 				}}
 				className="pr-10"
-				placeholder="Ingresa una fecha"
+				placeholder="dd/MM/yyyy o YYYY-MM-DD"
 			/>
+
 			<Popover open={open} onOpenChange={setOpen}>
 				<PopoverTrigger asChild>
 					<Button
@@ -87,15 +123,17 @@ export const TaskDatePicker: FC<DatePickerProps> = ({ value, onChange }) => {
 						<CalendarIcon className="size-4" />
 					</Button>
 				</PopoverTrigger>
+
 				<PopoverContent className="w-auto p-0">
 					<Calendar
 						mode="single"
-						selected={initialDate}
+						selected={selectedDate}
 						onSelect={handleSelectDate}
-						defaultMonth={initialDate}
+						defaultMonth={today}
 						captionLayout="dropdown"
 						className="mx-auto bg-transparent"
 					/>
+
 					<div className="flex flex-wrap gap-2 border-t p-2">
 						{presets.map(({ label, offset }) => (
 							<Button
@@ -118,6 +156,6 @@ export const TaskDatePicker: FC<DatePickerProps> = ({ value, onChange }) => {
 const formatLabel = (d: Date) =>
 	d.toLocaleDateString("es-MX", {
 		day: "2-digit",
-		month: "long",
+		month: "2-digit",
 		year: "numeric",
 	});

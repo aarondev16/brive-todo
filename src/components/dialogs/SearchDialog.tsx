@@ -32,8 +32,8 @@ export const SearchDialog: FC = () => {
 				</SidebarMenuButton>
 			</DialogTrigger>
 
-			<DialogContent className="w-full max-w-md">
-				<div className="flex items-center gap-2">
+			<DialogContent className="w-full max-w-md ">
+				<div className="flex items-center gap-2 mt-4">
 					<SearchIcon className="text-muted-foreground" />
 					<Input
 						autoFocus
@@ -44,7 +44,7 @@ export const SearchDialog: FC = () => {
 					/>
 				</div>
 
-				<div className="mt-4 h-60 space-y-2 overflow-y-auto">
+				<div className=" h-60 space-y-2 overflow-y-auto pr-4">
 					{debouncedQuery === "" ? (
 						<p className="text-center text-muted-foreground text-sm">
 							Escribe para buscar tareas...

@@ -34,7 +34,7 @@ function RouteComponent() {
 
 		if (!name?.trim()) {
 			newErrors.name = "El nombre es requerido";
-		} else if (name.trim()?.length < 2) {
+		} else if (name?.trim()?.length < 2) {
 			newErrors.name = "El nombre debe tener al menos 2 caracteres";
 		}
 

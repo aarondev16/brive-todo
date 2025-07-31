@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { Inbox, type LucideIcon } from "lucide-react";
-import { AddTaskDialog } from "@/components/dialogs/add-task-dialog.tsx";
+import { AddTaskDialog } from "@/components/dialogs/AddTaskDialog.tsx";
 import { SearchDialog } from "@/components/dialogs/SearchDialog.tsx";
 import {
 	SidebarGroup,
