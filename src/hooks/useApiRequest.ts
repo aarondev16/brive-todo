@@ -9,7 +9,6 @@ import axios, { type AxiosRequestConfig, type AxiosResponse } from "axios";
 import { toast } from "sonner";
 
 type HttpMethod = "GET" | "POST" | "PUT" | "DELETE" | "PATCH";
-type ApiType = "app" | "auth";
 
 // Token management functions
 const getToken = (): string | null => {
@@ -22,11 +21,6 @@ const removeToken = (): void => {
 
 const appApiClient = axios.create({
 	baseURL: import.meta.env.VITE_APP_API,
-	timeout: 10000,
-});
-
-const authApiClient = axios.create({
-	baseURL: import.meta.env.VITE_AUTH_API,
 	timeout: 10000,
 });
 
@@ -59,7 +53,6 @@ const apiRequest = async <T>(
 	endpoint: string,
 	method: HttpMethod = "GET",
 	data?: unknown,
-	apiType: ApiType = "app",
 ): Promise<T> => {
 	const config: AxiosRequestConfig = {
 		method,
@@ -70,8 +63,7 @@ const apiRequest = async <T>(
 		config.data = data;
 	}
 
-	const client = apiType === "auth" ? authApiClient : appApiClient;
-	const response: AxiosResponse<T> = await client(config);
+	const response: AxiosResponse<T> = await appApiClient(config);
 	return response.data;
 };
 
@@ -81,16 +73,13 @@ export const useApiQuery = <T = unknown, R = T>(
 		enabled?: boolean;
 		gcTime?: number;
 		staleTime?: number;
-		apiType?: ApiType;
 		transformFn?: (data: T) => R;
 	},
 ): UseQueryResult<R, Error> => {
-	const apiType = options?.apiType ?? "app";
-
 	return useQuery<R, Error>({
-		queryKey: [apiType, endpoint],
+		queryKey: [endpoint],
 		queryFn: async () => {
-			const raw = await apiRequest<T>(endpoint, "GET", undefined, apiType);
+			const raw = await apiRequest<T>(endpoint, "GET", undefined);
 			return options?.transformFn
 				? options.transformFn(raw)
 				: (raw as unknown as R);
@@ -111,17 +100,15 @@ export const useApiMutation = <TData = unknown, TVariables = unknown>(
 		showToast?: boolean;
 		successMessage?: string;
 		errorMessage?: string;
-		apiType?: ApiType;
 	},
 ): UseMutationResult<TData, Error, TVariables> => {
 	const queryClient = useQueryClient();
-	const apiType = options?.apiType ?? "app";
 
 	return useMutation<TData, Error, TVariables>({
 		mutationFn: (variables) => {
 			const resolvedEndpoint =
 				typeof endpoint === "function" ? endpoint(variables) : endpoint;
-			return apiRequest<TData>(resolvedEndpoint, method, variables, apiType);
+			return apiRequest<TData>(resolvedEndpoint, method, variables);
 		},
 		onSuccess: (data) => {
 			const queriesToInvalidate = options?.invalidateQueries ?? [endpoint];
@@ -130,24 +117,17 @@ export const useApiMutation = <TData = unknown, TVariables = unknown>(
 				queryClient
 					.invalidateQueries({
 						predicate: (q) =>
-							q.queryKey[0] === apiType &&
-							typeof q.queryKey[1] === "string" &&
+							typeof q.queryKey[0] === "string" &&
 							// @ts-ignore
-							(q.queryKey[1] as string).startsWith(key),
+							(q.queryKey[0] as string).startsWith(key),
 					})
 					.then((r) => r);
 			});
 
 			if (options?.showToast !== false) {
-				const responseMessage =
-					typeof data === "object" && data !== null && "message" in data
-						? (data as { message: string }).message
-						: undefined;
-
 				const message =
-					options?.successMessage ||
-					responseMessage ||
-					"Operación completada exitosamente";
+					(data as { meta: { message: string } })?.meta?.message ||
+					options?.successMessage;
 				toast.success(message);
 			}
 

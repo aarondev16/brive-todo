@@ -56,7 +56,6 @@ export const isAuthenticated = (): boolean => {
 
 export const useRegister = () =>
 	useApiMutation<RegisterResponse, RegisterPayload>("/auth/register", "POST", {
-		apiType: "auth",
 		successMessage:
 			"Usuario registrado exitosamente. Por favor, inicia sesión.",
 		errorMessage: "Error al registrar usuario",
@@ -68,7 +67,6 @@ export const useRegister = () =>
 
 export const useLogin = () =>
 	useApiMutation<LoginResponse, LoginPayload>("/auth/login", "POST", {
-		apiType: "auth",
 		successMessage: "Inicio de sesión exitoso",
 		errorMessage: "Error al iniciar sesión",
 		showToast: true,
