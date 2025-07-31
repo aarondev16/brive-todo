@@ -89,7 +89,7 @@ export function NavProjects() {
 										</AlertDialogTitle>
 										<AlertDialogDescription>
 											Esta acción no se puede deshacer. <br /> El proyecto se
-											eliminará permanentemente.
+											eliminará permanentemente junto a sus tareas.
 										</AlertDialogDescription>
 									</AlertDialogHeader>
 									<AlertDialogFooter>
