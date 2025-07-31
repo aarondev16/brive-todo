@@ -145,8 +145,8 @@ export const TaskItem: FC<{ task: Task }> = memo(({ task }) => {
 
 	const saveChanges = useCallback(() => {
 		patch({
-			description: description.trim(),
-			longDescription: longDescription.trim(),
+			description: description?.trim(),
+			longDescription: longDescription?.trim(),
 			status,
 			deadline: deadline ?? undefined,
 		});
