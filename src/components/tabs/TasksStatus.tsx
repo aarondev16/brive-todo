@@ -8,9 +8,9 @@ export function TasksStatus(props: {
 		<Tabs
 			value={props.value}
 			onValueChange={props.onValueChange}
-			className="mb-4"
+			className="mb-2"
 		>
-			<TabsList>
+			<TabsList className="mx-auto">
 				<TabsTrigger value="all">Todas</TabsTrigger>
 				<TabsTrigger value="pending">Pendientes</TabsTrigger>
 				<TabsTrigger value="in-progress">En progreso</TabsTrigger>

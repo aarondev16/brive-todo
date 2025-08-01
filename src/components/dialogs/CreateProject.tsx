@@ -45,9 +45,7 @@ const CreateProject = () => {
 			await createProject(data);
 			reset();
 			setOpen(false);
-		} catch (error) {
-			console.error("Error al crear el proyecto:", error);
-		}
+		} catch (error) {}
 	};
 
 	return (

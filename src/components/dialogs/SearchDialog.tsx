@@ -1,7 +1,13 @@
+import { DialogDescription, DialogTitle } from "@radix-ui/react-dialog";
 import { Loader2, Search as SearchIcon } from "lucide-react";
 import { type FC, useEffect, useState } from "react";
 import { TaskItem } from "@/components/TaskItem.tsx";
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import {
+	Dialog,
+	DialogContent,
+	DialogHeader,
+	DialogTrigger,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { SidebarMenuButton } from "@/components/ui/sidebar";
 import { useGetTasks } from "@/hooks/useTask";
@@ -14,7 +20,7 @@ export const SearchDialog: FC = () => {
 	useEffect(() => {
 		const handler = setTimeout(() => {
 			setDebouncedQuery(query?.trim());
-		}, 100);
+		}, 300);
 		return () => clearTimeout(handler);
 	}, [query]);
 
@@ -32,8 +38,13 @@ export const SearchDialog: FC = () => {
 				</SidebarMenuButton>
 			</DialogTrigger>
 
-			<DialogContent className="w-full max-w-md ">
-				<div className="flex items-center gap-2 mt-4">
+			<DialogContent className="w-full max-w-md">
+				<DialogHeader>
+					<DialogTitle className="mt-0 p-0">Buscar Tareas</DialogTitle>
+					<DialogDescription></DialogDescription>
+				</DialogHeader>
+
+				<div className="flex items-center gap-2">
 					<SearchIcon className="text-muted-foreground" />
 					<Input
 						autoFocus
@@ -44,7 +55,7 @@ export const SearchDialog: FC = () => {
 					/>
 				</div>
 
-				<div className=" h-60 space-y-2 overflow-y-auto pr-4">
+				<div className="h-60 space-y-2 overflow-y-auto pr-4">
 					{debouncedQuery === "" ? (
 						<p className="text-center text-muted-foreground text-sm">
 							Escribe para buscar tareas...

@@ -1,6 +1,6 @@
 import { addDays, isValid, parseISO, startOfDay } from "date-fns";
 import { Calendar as CalendarIcon } from "lucide-react";
-import { type FC, useEffect, useMemo, useState } from "react";
+import { type FC, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Input } from "@/components/ui/input";
@@ -14,17 +14,16 @@ interface DatePickerProps {
 	value: string | null;
 	onChange: (iso: string | null) => void;
 }
-
 export const TaskDatePicker: FC<DatePickerProps> = ({ value, onChange }) => {
-	const today = useMemo(() => startOfDay(new Date()), []);
+	const today = startOfDay(new Date());
 
 	const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
 	const [input, setInput] = useState("");
 	const [open, setOpen] = useState(false);
-
 	useEffect(() => {
 		if (value) {
-			const parsed = parseISO(value);
+			const dateOnly = value.split("T")[0];
+			const parsed = parseISO(dateOnly);
 			if (isValid(parsed)) {
 				const sd = startOfDay(parsed);
 				setSelectedDate(sd);
@@ -36,22 +35,19 @@ export const TaskDatePicker: FC<DatePickerProps> = ({ value, onChange }) => {
 		setInput("");
 	}, [value]);
 
-	const presets = useMemo(
-		() => [
-			{ label: "Hoy", offset: 0 },
-			{ label: "Mañana", offset: 1 },
-			{ label: "En 3 días", offset: 3 },
-			{ label: "En 1 semana", offset: 7 },
-			{ label: "En 2 semanas", offset: 14 },
-		],
-		[],
-	);
+	const presets = [
+		{ label: "Hoy", offset: 0 },
+		{ label: "Mañana", offset: 1 },
+		{ label: "En 3 días", offset: 3 },
+		{ label: "En 1 semana", offset: 7 },
+		{ label: "En 2 semanas", offset: 14 },
+	];
 
 	const isoFormat = (d: Date) => {
-		const y = d.getUTCFullYear();
-		const m = String(d.getUTCMonth() + 1).padStart(2, "0");
-		const day = String(d.getUTCDate()).padStart(2, "0");
-		return `${y}-${m}-${day}T18:00:00.000Z`;
+		const y = d.getFullYear();
+		const m = String(d.getMonth() + 1).padStart(2, "0");
+		const day = String(d.getDate()).padStart(2, "0");
+		return `${y}-${m}-${day}`;
 	};
 
 	const handleSelectDate = (d?: Date) => {
@@ -73,7 +69,6 @@ export const TaskDatePicker: FC<DatePickerProps> = ({ value, onChange }) => {
 
 	const handleInput = (text: string) => {
 		setInput(text);
-		// Try ISO yyyy-MM-dd
 		if (/^\d{4}-\d{2}-\d{2}$/.test(text)) {
 			const d = parseISO(text);
 			if (isValid(d)) {
@@ -83,7 +78,6 @@ export const TaskDatePicker: FC<DatePickerProps> = ({ value, onChange }) => {
 				return;
 			}
 		}
-		// Try dd/MM/yyyy
 		if (/^\d{2}\/\d{2}\/\d{4}$/.test(text)) {
 			const [dd, mm, yyyy] = text.split("/");
 			const d = new Date(Number(yyyy), Number(mm) - 1, Number(dd));
@@ -96,7 +90,6 @@ export const TaskDatePicker: FC<DatePickerProps> = ({ value, onChange }) => {
 		}
 		onChange(null);
 	};
-
 	return (
 		<div className="relative w-full">
 			<Input

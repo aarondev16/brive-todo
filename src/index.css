@@ -125,7 +125,6 @@
 	navigation: auto;
 }
 
-
 /* estilos de scroll */
 ::-webkit-scrollbar {
 	width: 8px;
@@ -143,4 +142,3 @@
 ::-webkit-scrollbar-thumb:hover {
 	background: #555;
 }
-

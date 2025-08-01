@@ -8,14 +8,68 @@ import {
 	Sidebar,
 	SidebarContent,
 	SidebarFooter,
-	SidebarRail,
-} from "@/components/ui/sidebar";
-import {
 	SidebarInset,
 	SidebarProvider,
+	SidebarRail,
 	SidebarTrigger,
 } from "@/components/ui/sidebar.tsx";
 import { isAuthenticated } from "@/hooks/useAuth";
+
+const NAV_ITEMS = [
+	{
+		title: "Hoy",
+		url: "today",
+		icon: Calendar,
+	},
+	{
+		title: "Próximo",
+		url: "upcoming",
+		icon: Calendar1,
+	},
+];
+
+function AppSidebar() {
+	return (
+		<Sidebar collapsible="icon">
+			<SidebarFooter>
+				<NavUser  />
+			</SidebarFooter>
+			<SidebarContent>
+				<NavMain items={NAV_ITEMS} />
+				<NavProjects />
+			</SidebarContent>
+			<SidebarRail />
+		</Sidebar>
+	);
+}
+
+function AppHeader() {
+	return (
+		<header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
+			<div className="flex items-center gap-2 px-4">
+				<SidebarTrigger className="-ml-1" />
+				<Separator
+					orientation="vertical"
+					className="mr-2 data-[orientation=vertical]:h-4"
+				/>
+			</div>
+		</header>
+	);
+}
+
+function RouteComponent() {
+	return (
+		<SidebarProvider open={true}>
+			<AppSidebar />
+			<SidebarInset>
+				<AppHeader />
+				<div className="flex justify-center">
+					<Outlet />
+				</div>
+			</SidebarInset>
+		</SidebarProvider>
+	);
+}
 
 export const Route = createFileRoute("/app")({
 	component: RouteComponent,
@@ -25,53 +79,3 @@ export const Route = createFileRoute("/app")({
 		}
 	},
 });
-
-const data = {
-	user: {
-		name: "Aaron",
-		email: "aaronoso0704@gmail.com",
-	},
-	navMain: [
-		{
-			title: "Hoy",
-			url: "today",
-			icon: Calendar,
-		},
-		{
-			title: "Próximo",
-			url: "upcoming",
-			icon: Calendar1,
-		},
-	],
-};
-
-function RouteComponent() {
-	return (
-		<SidebarProvider open={true}>
-			<Sidebar collapsible="icon">
-				<SidebarFooter>
-					<NavUser user={data.user} />
-				</SidebarFooter>
-				<SidebarContent>
-					<NavMain items={data.navMain} />
-					<NavProjects />
-				</SidebarContent>
-				<SidebarRail />
-			</Sidebar>
-			<SidebarInset>
-				<header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
-					<div className="flex items-center gap-2 px-4">
-						<SidebarTrigger className="-ml-1" />
-						<Separator
-							orientation="vertical"
-							className="mr-2 data-[orientation=vertical]:h-4"
-						/>
-					</div>
-				</header>
-				<div className="flex justify-center">
-					<Outlet />
-				</div>
-			</SidebarInset>
-		</SidebarProvider>
-	);
-}

@@ -9,7 +9,7 @@ import {
 	startOfToday,
 } from "date-fns";
 import { es } from "date-fns/locale";
-import { type FC, memo, useCallback, useMemo, useState } from "react";
+import { type FC, memo, useState } from "react";
 
 import { TasksAccordion } from "@/components/accordions/TasksAccordion.tsx";
 import { TaskItem } from "@/components/TaskItem.tsx";
@@ -28,11 +28,11 @@ export const today = startOfToday();
 
 const parseDeadline = (d?: string | null): Date | null => {
 	if (!d) return null;
-
 	let date = parse(d, "yyyy-MM-dd", new Date());
+	const dateOnly = d.split("T")[0];
 	if (!isValid(date)) {
 		try {
-			date = parseISO(d);
+			date = parseISO(dateOnly);
 		} catch {
 			date = new Date(d);
 		}
@@ -91,7 +91,7 @@ export const TaskList: FC<TaskListProps> = memo(({ scope, projectId }) => {
 		enabled: scope === "project",
 	});
 
-	const tasks = useMemo(() => {
+	const tasks = (() => {
 		switch (scope) {
 			case "inbox":
 				return inboxTasks;
@@ -103,11 +103,11 @@ export const TaskList: FC<TaskListProps> = memo(({ scope, projectId }) => {
 			default:
 				return projectTasks;
 		}
-	}, [scope, inboxTasks, todayTasks, upcomingTasks, projectTasks]);
+	})();
 
 	const [statusTab, setStatusTab] = useState<"all" | Task["status"]>("all");
 
-	const baseFiltered = useMemo(() => {
+	const baseFiltered = (() => {
 		if (scope === "today") {
 			return tasks.filter(
 				(task) => taskFilters.today(task) || taskFilters.overdue(task),
@@ -117,15 +117,14 @@ export const TaskList: FC<TaskListProps> = memo(({ scope, projectId }) => {
 		} else {
 			return tasks;
 		}
-	}, [tasks, scope]);
+	})();
 
-	const statusFiltered = useMemo(() => {
-		return statusTab === "all"
+	const statusFiltered =
+		statusTab === "all"
 			? baseFiltered
 			: baseFiltered.filter((task) => task.status === statusTab);
-	}, [baseFiltered, statusTab]);
 
-	const grouped = useMemo(() => {
+	const grouped = (() => {
 		const groups: Record<string, Task[]> = {};
 
 		for (const task of statusFiltered) {
@@ -149,23 +148,28 @@ export const TaskList: FC<TaskListProps> = memo(({ scope, projectId }) => {
 		}
 
 		return groups;
-	}, [statusFiltered, scope]);
+	})();
+	const sortedGroupKeys = Object.keys(grouped).sort((a, b) => {
+		const indexA = GROUP_ORDER.indexOf(a as (typeof GROUP_ORDER)[number]);
+		const indexB = GROUP_ORDER.indexOf(b as (typeof GROUP_ORDER)[number]);
 
-	const sortedGroupKeys = useMemo(
-		() =>
-			Object.keys(grouped).sort((a, b) => {
-				const indexA = GROUP_ORDER.indexOf(a as (typeof GROUP_ORDER)[number]);
-				const indexB = GROUP_ORDER.indexOf(b as (typeof GROUP_ORDER)[number]);
+		if (indexA !== -1 && indexB !== -1) return indexA - indexB;
+		if (indexA !== -1) return -1;
+		if (indexB !== -1) return 1;
 
-				if (indexA !== -1 && indexB !== -1) return indexA - indexB;
-				if (indexA !== -1) return -1;
-				if (indexB !== -1) return 1;
+		if (scope === "upcoming") {
+			try {
+				const dateA = parse(a, "EEEE dd MMMM", new Date(), { locale: es });
+				const dateB = parse(b, "EEEE dd MMMM", new Date(), { locale: es });
 
-				return a.localeCompare(b);
-			}),
-		[grouped],
-	);
+				if (isValid(dateA) && isValid(dateB)) {
+					return dateA.getTime() - dateB.getTime();
+				}
+			} catch {}
+		}
 
+		return a.localeCompare(b);
+	});
 	const TaskRow: FC<{ task: Task }> = ({ task }) => {
 		return (
 			<div className="flex items-center justify-between">
@@ -174,9 +178,9 @@ export const TaskList: FC<TaskListProps> = memo(({ scope, projectId }) => {
 		);
 	};
 
-	const handleStatusChange = useCallback((value: string) => {
+	const handleStatusChange = (value: string) => {
 		setStatusTab(value as "all" | Task["status"]);
-	}, []);
+	};
 
 	return (
 		<div className="mx-auto w-full max-w-xl">

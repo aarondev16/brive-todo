@@ -1,5 +1,6 @@
+import { DialogDescription } from "@radix-ui/react-dialog";
 import { addDays, format } from "date-fns";
-import { type FC, memo, useCallback, useEffect, useState } from "react";
+import { type FC, memo, useEffect, useState } from "react";
 import { DeleteTask } from "@/components/alerts/DeleteTask.tsx";
 import { TaskDatePicker } from "@/components/calendar-19.tsx";
 import { TaskDateActions } from "@/components/popovers/TaskDateActions.tsx";
@@ -23,6 +24,13 @@ import {
 import { Textarea } from "@/components/ui/textarea.tsx";
 import { useDeleteTask, useUpdateTask } from "@/hooks/useTask.ts";
 import type { Task } from "@/types/task.ts";
+
+export const formatSimple = (d?: string | null): string | null => {
+	if (!d) return null;
+	const d2 = d.split("T");
+	const [day, month, year] = d2[0].split("-");
+	return `${year}-${month}-${day}`;
+};
 
 export const TaskItem: FC<{ task: Task }> = memo(({ task }) => {
 	const { mutate: update, isPending } = useUpdateTask(task.id);
@@ -48,53 +56,44 @@ export const TaskItem: FC<{ task: Task }> = memo(({ task }) => {
 			setEditStatus(task.status);
 			setEditDeadline(task.deadline ?? null);
 		}
+		formatDeadline;
 	}, [open, task]);
 
-	const patch = useCallback((body: Partial<Task>) => update(body), [update]);
+	const patch = (body: Partial<Task>) => update(body);
 
-	const handleToggleCompleted = useCallback(
-		(checked: boolean) => {
-			const newStatus: Task["status"] = checked ? "completed" : "pending";
-			patch({ status: newStatus });
-		},
-		[patch],
-	);
+	const handleToggleCompleted = (checked: boolean) => {
+		const newStatus: Task["status"] = checked ? "completed" : "pending";
+		patch({ status: newStatus });
+	};
 
-	const moveDeadline = useCallback(
-		(days: number) => {
-			const newDate = format(addDays(today, days), "yyyy-MM-dd");
-			patch({ deadline: newDate });
-		},
-		[patch],
-	);
+	const moveDeadline = (days: number) => {
+		const newDate = format(addDays(today, days), "yyyy-MM-dd");
+		patch({ deadline: newDate });
+	};
 
-	const saveChanges = useCallback(() => {
-		// Ensure we explicitly pass the deadline value
+	const saveChanges = () => {
 		const updates: Partial<Task> = {
 			description: editDescription?.trim(),
 			longDescription: editLongDescription?.trim(),
 			status: editStatus,
 		};
 
-		// Only add deadline if it has a value
 		if (editDeadline) {
 			updates.deadline = editDeadline;
 		} else {
-			// Explicitly set to undefined to clear it
 			updates.deadline = undefined;
 		}
 
 		patch(updates);
 		setOpen(false);
-	}, [editDescription, editLongDescription, editStatus, editDeadline, patch]);
+	};
 
-	const openConfirm = useCallback(() => setConfirmOpen(true), []);
-	const closeConfirm = useCallback(() => setConfirmOpen(false), []);
-	const confirmDelete = useCallback(() => {
+	const openConfirm = () => setConfirmOpen(true);
+	const closeConfirm = () => setConfirmOpen(false);
+	const confirmDelete = () => {
 		deleteTask();
 		closeConfirm();
-	}, [deleteTask, closeConfirm]);
-
+	};
 	return (
 		<Dialog open={open} onOpenChange={setOpen}>
 			<div className="group flex w-full items-center justify-between gap-3 border-border border-b py-3">
@@ -126,7 +125,7 @@ export const TaskItem: FC<{ task: Task }> = memo(({ task }) => {
 					)}
 					{task.deadline && (
 						<span className="text-primary text-xs">
-							{formatDeadline(task.deadline)}
+							{formatSimple(task.deadline)}
 						</span>
 					)}
 				</button>
@@ -176,15 +175,14 @@ export const TaskItem: FC<{ task: Task }> = memo(({ task }) => {
 
 			<DialogContent className="flex w-full max-w-[350px] flex-col gap-6 overflow-y-auto">
 				<DialogHeader>
-					<DialogTitle>
-						<Input
-							value={editDescription}
-							onChange={(e) => setEditDescription(e.target.value)}
-							className="mt-4 bg-transparent font-semibold text-lg shadow-none focus:ring-0"
-						/>
-					</DialogTitle>
+					<DialogTitle>{task.description}</DialogTitle>
+					<DialogDescription />
 				</DialogHeader>
-
+				<Input
+					value={editDescription}
+					onChange={(e) => setEditDescription(e.target.value)}
+					className="bg-transparent font-semibold text-lg shadow-none focus:ring-0"
+				/>
 				<Textarea
 					value={editLongDescription}
 					onChange={(e) => setEditLongDescription(e.target.value)}

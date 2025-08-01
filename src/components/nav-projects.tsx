@@ -77,10 +77,8 @@ export function NavProjects() {
 									if (!open) setSelected(null);
 								}}
 							>
-								<AlertDialogTrigger asChild>
-									<button type="button" onClick={() => openConfirm(item)}>
-										<Trash className="size-4" />
-									</button>
+								<AlertDialogTrigger asChild onClick={() => openConfirm(item)}>
+									<Trash className="size-4" />
 								</AlertDialogTrigger>
 								<AlertDialogContent>
 									<AlertDialogHeader>

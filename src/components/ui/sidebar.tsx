@@ -2,7 +2,7 @@ import { Slot } from "@radix-ui/react-slot";
 import { cva, type VariantProps } from "class-variance-authority";
 import { PanelLeftIcon } from "lucide-react";
 import * as React from "react";
-import { useCallback, useEffect, useMemo } from "react";
+import { useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import {
 	Sheet,
@@ -68,25 +68,26 @@ function SidebarProvider({
 	// We use openProp and setOpenProp for control from outside the component.
 	const [_open, _setOpen] = React.useState(defaultOpen);
 	const open = openProp ?? _open;
-	const setOpen = React.useCallback(
-		(value: boolean | ((value: boolean) => boolean)) => {
-			const openState = typeof value === "function" ? value(open) : value;
-			if (setOpenProp) {
-				setOpenProp(openState);
-			} else {
-				_setOpen(openState);
-			}
+	const setOpen = (value: boolean | ((value: boolean) => boolean)) => {
+		const openState = typeof value === "function" ? value(open) : value;
+		if (setOpenProp) {
+			setOpenProp(openState);
+		} else {
+			_setOpen(openState);
+		}
 
-			// This sets the cookie to keep the sidebar state.
-			document.cookie = `${SIDEBAR_COOKIE_NAME}=${openState}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}`;
-		},
-		[setOpenProp, open],
-	);
+		// This sets the cookie to keep the sidebar state.
+		document.cookie = `${SIDEBAR_COOKIE_NAME}=${openState}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}`;
+	};
 
 	// Helper to toggle the sidebar.
-	const toggleSidebar = useCallback(() => {
+	const toggleSidebar = () => {
 		return isMobile ? setOpenMobile((open) => !open) : setOpen((open) => !open);
-	}, [isMobile, setOpen, setOpenMobile]);
+	};
+
+	// Use refs to maintain stable references for the event handler
+	const toggleSidebarRef = useRef(toggleSidebar);
+	toggleSidebarRef.current = toggleSidebar;
 
 	// Adds a keyboard shortcut to toggle the sidebar.
 	useEffect(() => {
@@ -96,28 +97,25 @@ function SidebarProvider({
 				(event.metaKey || event.ctrlKey)
 			) {
 				event.preventDefault();
-				toggleSidebar();
+				toggleSidebarRef.current();
 			}
 		};
 
 		window.addEventListener("keydown", handleKeyDown);
 		return () => window.removeEventListener("keydown", handleKeyDown);
-	}, [toggleSidebar]);
+	}, []);
 
 	const state = open ? "expanded" : "collapsed";
 
-	const contextValue = useMemo<SidebarContextProps>(
-		() => ({
-			state,
-			open,
-			setOpen,
-			isMobile,
-			openMobile,
-			setOpenMobile,
-			toggleSidebar,
-		}),
-		[state, open, setOpen, isMobile, openMobile, setOpenMobile, toggleSidebar],
-	);
+	const contextValue: SidebarContextProps = {
+		state,
+		open,
+		setOpen,
+		isMobile,
+		openMobile,
+		setOpenMobile,
+		toggleSidebar,
+	};
 
 	return (
 		<SidebarContext.Provider value={contextValue}>
@@ -226,7 +224,6 @@ function Sidebar({
 					side === "left"
 						? "left-0 group-data-[collapsible=offcanvas]:left-[calc(var(--sidebar-width)*-1)]"
 						: "right-0 group-data-[collapsible=offcanvas]:right-[calc(var(--sidebar-width)*-1)]",
-					// Adjust the padding for floating and inset variants.
 					variant === "floating" || variant === "inset"
 						? "p-2 group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)+(--spacing(4))+2px)]"
 						: "group-data-[collapsible=icon]:w-(--sidebar-width-icon) group-data-[side=left]:border-r group-data-[side=right]:border-l",
