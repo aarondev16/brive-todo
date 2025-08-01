@@ -35,7 +35,7 @@ s
    
    Edita el archivo `.env` y configura la URL de tu API backend:
    ```env
-   VITE_APP_API=http://localhost:3000/api
+   VITE_APP_API=http://localhost:3000/
    ```
 
 4. **Inicia el servidor de desarrollo**
